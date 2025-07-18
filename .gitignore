@@ -1,6 +1,6 @@
 # dependencies (bun install)
 node_modules
-
+cdk.out
 # output
 out
 dist
