@@ -2,6 +2,7 @@ import { Stack, type StackProps } from "aws-cdk-lib";
 import { ApiKey, RestApi, UsagePlan } from "aws-cdk-lib/aws-apigateway";
 import type { Construct } from "constructs";
 import { Endpoints } from "../constructs/Endpoints";
+import { ProcessingQueue } from "../constructs/ProcessingQueue";
 
 interface APIProps extends StackProps {
   stage: string;
@@ -20,10 +21,16 @@ export class RecommendationAPI extends Stack {
     const usagePlan = new UsagePlan(this, "UsagePlan");
     const apiKey = new ApiKey(this, "ApiKey");
     usagePlan.addApiKey(apiKey);
+    usagePlan.addApiStage({
+      stage: api.deploymentStage,
+    });
+
+    const { queue } = new ProcessingQueue(this, "ProcessingQueue");
 
     new Endpoints(this, "Endpoints", {
       api: api,
       stage: props.stage,
+      processingQueue: queue,
     });
   }
 }

@@ -1,3 +1,6 @@
+import json
+
+
 def handler(event, context):
     """
     Lambda function handler for testing purposes.
@@ -5,5 +8,5 @@ def handler(event, context):
     print("Event received:", event)
     return {
         "statusCode": 200,
-        "body": "Test successful"
+        "body": json.dumps({"message": "Test successful"})
     }

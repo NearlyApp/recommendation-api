@@ -11,26 +11,32 @@ import { Code, Function, LayerVersion, Runtime } from "aws-cdk-lib/aws-lambda";
 import { fileURLToPath } from "node:url";
 import { Construct } from "constructs";
 import { dirname, join } from "path";
+import type { Queue } from "aws-cdk-lib/aws-sqs";
+import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 
 const dir = dirname(fileURLToPath(import.meta.url));
 
 interface EndpointsProps {
   api: RestApi;
   stage: string;
+  processingQueue: Queue;
 }
 
 export class Endpoints extends Construct {
   readonly api: RestApi;
   readonly stage: string;
   readonly pythonLayer: LayerVersion;
+  readonly processingQueue: Queue;
   constructor(scope: Construct, id: string, props: EndpointsProps) {
     super(scope, id);
 
     this.api = props.api;
     this.stage = props.stage;
+    this.processingQueue = props.processingQueue;
     this.pythonLayer = this.createLambdaLayer();
 
     const hello = this.api.root.addResource("hello");
+    const ingest = this.api.root.addResource("ingest");
 
     const testHandler = this.createLambda({
       id: "TestHandler",
@@ -41,6 +47,27 @@ export class Endpoints extends Construct {
       resource: hello,
       method: "GET",
       lambda: testHandler,
+    });
+
+    const ingestHandler = this.createLambda({
+      id: "IngestHandler",
+      handler: "handlers.ingest_lambda_handler",
+      envs: {
+        STAGE: this.stage,
+        QUEUE_URL: this.processingQueue.queueUrl,
+      },
+    });
+    ingestHandler.addToRolePolicy(
+      new PolicyStatement({
+        actions: ["sqs:SendMessage"],
+        resources: [this.processingQueue.queueArn],
+      })
+    );
+
+    this.addIntegration({
+      resource: ingest,
+      method: "POST",
+      lambda: ingestHandler,
     });
   }
 
