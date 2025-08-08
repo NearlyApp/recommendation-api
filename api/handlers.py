@@ -1,10 +1,10 @@
-from lambdas.test import handler as test_handler
 from lambdas.ingest import handler as ingest_handler
-
-
-def test_lambda_handler(event, context):
-    return test_handler(event, context)
+from worker.main import handler as worker_handler
 
 
 def ingest_lambda_handler(event, context):
     return ingest_handler(event, context)
+
+
+def worker_lambda_handler(event, context):
+    return worker_handler(event, context)

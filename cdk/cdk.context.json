@@ -1,5 +1,12 @@
 {
   "acknowledged-issue-numbers": [
     34892
-  ]
+  ],
+  "ssm:account=992382534726:parameterName=/openai/dev/API_KEY:region=eu-west-1": "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",
+  "ssm:account=992382534726:parameterName=/opensearch/ENDPOINT:region=eu-west-1": "https://search-dev-opensearch-vhw2ee77f4oxynm6oml3n6rr4y.eu-west-1.es.amazonaws.com",
+  "ssm:account=992382534726:parameterName=/openai/prod/API_KEY:region=eu-west-1": "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",
+  "hosted-zone:account=992382534726:domainName=teamzbl.com:region=eu-west-1": {
+    "Id": "/hostedzone/Z05452131KRZOTKBFXO4E",
+    "Name": "teamzbl.com."
+  }
 }

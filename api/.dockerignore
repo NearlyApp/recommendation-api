@@ -1,0 +1,25 @@
+# Virtual environments
+.venv/
+worker/.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Development files
+.git/
+.gitignore
+tests/
+*.md
+Dockerfile*
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -7,12 +7,20 @@ import {
   type MethodOptions,
   type RestApi,
 } from "aws-cdk-lib/aws-apigateway";
-import { Code, Function, LayerVersion, Runtime } from "aws-cdk-lib/aws-lambda";
+import {
+  Code,
+  DockerImageCode,
+  DockerImageFunction,
+  Function,
+  LayerVersion,
+  Runtime,
+} from "aws-cdk-lib/aws-lambda";
 import { fileURLToPath } from "node:url";
 import { Construct } from "constructs";
 import { dirname, join } from "path";
 import type { Queue } from "aws-cdk-lib/aws-sqs";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
+import { Platform } from "aws-cdk-lib/aws-ecr-assets";
 
 const dir = dirname(fileURLToPath(import.meta.url));
 
@@ -25,7 +33,7 @@ interface EndpointsProps {
 export class Endpoints extends Construct {
   readonly api: RestApi;
   readonly stage: string;
-  readonly pythonLayer: LayerVersion;
+  // readonly pythonLayer: LayerVersion;
   readonly processingQueue: Queue;
   constructor(scope: Construct, id: string, props: EndpointsProps) {
     super(scope, id);
@@ -33,21 +41,9 @@ export class Endpoints extends Construct {
     this.api = props.api;
     this.stage = props.stage;
     this.processingQueue = props.processingQueue;
-    this.pythonLayer = this.createLambdaLayer();
+    // this.pythonLayer = this.createLambdaLayer();
 
-    const hello = this.api.root.addResource("hello");
     const ingest = this.api.root.addResource("ingest");
-
-    const testHandler = this.createLambda({
-      id: "TestHandler",
-      handler: "handlers.test_lambda_handler",
-    });
-
-    this.addIntegration({
-      resource: hello,
-      method: "GET",
-      lambda: testHandler,
-    });
 
     const ingestHandler = this.createLambda({
       id: "IngestHandler",
@@ -76,29 +72,18 @@ export class Endpoints extends Construct {
     handler: string;
     envs?: Record<string, string>;
   }) {
-    const func = new Function(this, options.id, {
-      code: Code.fromAsset(join(dir, "../../api"), {
-        exclude: [
-          "**/__pycache__/**",
-          "**/node_modules/**",
-          "**/tests/**",
-          "**/.git/**",
-          "**/tmp/**",
-          "**/venv/**",
-          "**/.venv/**",
-        ],
-        bundling: {
-          image: Runtime.PYTHON_3_12.bundlingImage,
-          command: ["bash", "-c", ["cp -r . /asset-output/"].join(" && ")],
-        },
+    const func = new DockerImageFunction(this, options.id, {
+      code: DockerImageCode.fromImageAsset(join(dir, "../../api"), {
+        exclude: ["**/__pycache__/**", "**/node_modules/**"],
+        file: "Dockerfile.lambda",
+        platform: Platform.LINUX_AMD64,
       }),
-      layers: [this.pythonLayer],
       environment: options.envs,
-      handler: options.handler,
-      runtime: Runtime.PYTHON_3_12,
       memorySize: 512,
       timeout: Duration.seconds(900),
     });
+
+    func.addEnvironment("LAMBDA_HANDLER", options.handler);
 
     return func;
   }
@@ -138,24 +123,24 @@ export class Endpoints extends Construct {
     }
   }
 
-  createLambdaLayer() {
-    return new LayerVersion(this, "PythonLayer", {
-      code: Code.fromAsset(join(dir, "../../api"), {
-        exclude: ["**/__pycache__/**", "**/node_modules/**"],
-        bundling: {
-          image: Runtime.PYTHON_3_12.bundlingImage,
-          command: [
-            "bash",
-            "-c",
-            [
-              "pip install --platform manylinux2014_x86_64 --only-binary=:all: -r requirements.txt -t /asset-output/python/lib/python3.12/site-packages/",
-              "cp -r . /asset-output/python/lib/python3.12/site-packages/",
-            ].join(" && "),
-          ],
-        },
-      }),
-      compatibleRuntimes: [Runtime.PYTHON_3_12],
-      description: "Python dependencies for Reco API Lambda functions",
-    });
-  }
+  // createLambdaLayer() {
+  //   return new LayerVersion(this, "PythonLayer", {
+  //     code: Code.fromAsset(join(dir, "../../api"), {
+  //       exclude: ["**/__pycache__/**", "**/node_modules/**"],
+  //       bundling: {
+  //         image: Runtime.PYTHON_3_12.bundlingImage,
+  //         command: [
+  //           "bash",
+  //           "-c",
+  //           [
+  //             "pip install --platform manylinux2014_x86_64 --only-binary=:all: -r requirements.txt -t /asset-output/python/lib/python3.12/site-packages/",
+  //             "cp -r . /asset-output/python/lib/python3.12/site-packages/",
+  //           ].join(" && "),
+  //         ],
+  //       },
+  //     }),
+  //     compatibleRuntimes: [Runtime.PYTHON_3_12],
+  //     description: "Python dependencies for Reco API Lambda functions",
+  //   });
+  // }
 }
