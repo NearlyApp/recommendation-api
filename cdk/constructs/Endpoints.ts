@@ -15,6 +15,7 @@ import {
 import * as ddb from "aws-cdk-lib/aws-dynamodb";
 import * as ssm from "aws-cdk-lib/aws-ssm";
 import * as sqs from "aws-cdk-lib/aws-sqs";
+import * as opensearch from "aws-cdk-lib/aws-opensearchservice";
 import { fileURLToPath } from "node:url";
 import { Construct } from "constructs";
 import { dirname, join } from "path";
@@ -57,10 +58,21 @@ export class Endpoints extends Construct {
       this,
       `/opensearch/DOMAIN_ARN`
     );
+    const opensearchEndpoint = ssm.StringParameter.valueFromLookup(
+      this,
+      `/opensearch/ENDPOINT`
+    );
+    const opensearchDomain = opensearch.Domain.fromDomainEndpoint(
+      this,
+      "OpenSearchDomain",
+      opensearchEndpoint
+    );
+    opensearchDomain.grantReadWrite(processingLambda);
+
     processingLambda.addToRolePolicy(
       new PolicyStatement({
-        actions: ["es:*"],
-        resources: [opensearchArn],
+        actions: ["es:ESHttp*"],
+        resources: [`${opensearchArn}/*`],
       })
     );
 

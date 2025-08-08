@@ -2,16 +2,17 @@ from opensearchpy import OpenSearch, AWSV4SignerAuth, RequestsHttpConnection
 from cachetools import TTLCache, cached
 import boto3
 import os
+from urllib.parse import urlparse
 
 from worker.lib.pydantic.data_models import DataModel
 
 opensearch_url = os.getenv("OPENSEARCH_ENDPOINT")
+parsed_opensearch_url = urlparse(opensearch_url)
 credentials = boto3.Session().get_credentials()
 auth = AWSV4SignerAuth(credentials, "eu-west-1")
 stage = os.getenv("STAGE", "dev")
 
 connect_args = {
-    "opensearch_url": opensearch_url,
     "use_ssl": True,
     "verify_certs": True,
     "connection_class": RequestsHttpConnection,
@@ -26,7 +27,9 @@ def get_opensearch_client():
     """
     Returns an OpenSearch client with caching.
     """
-    return OpenSearch(hosts=[opensearch_url], **connect_args)
+    return OpenSearch(
+        hosts=[{"host": parsed_opensearch_url.hostname, "port": 443}], **connect_args
+    )
 
 
 class OpenSearchClient:
