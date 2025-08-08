@@ -3,7 +3,7 @@ from cachetools import TTLCache, cached
 import boto3
 import os
 
-from lib.pydantic.data_models import DataModel
+from worker.lib.pydantic.data_models import DataModel
 
 opensearch_url = os.getenv("OPENSEARCH_ENDPOINT")
 credentials = boto3.Session().get_credentials()

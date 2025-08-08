@@ -8,7 +8,7 @@ export class DataTable extends Construct {
     super(scope, id);
     this.dataTable = new ddb.Table(this, "DataTable", {
       partitionKey: { name: "post_id", type: ddb.AttributeType.STRING },
-      sortKey: { name: "timestamp", type: ddb.AttributeType.STRING },
+      sortKey: { name: "updated_at", type: ddb.AttributeType.STRING },
       billingMode: ddb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: RemovalPolicy.DESTROY,
     });

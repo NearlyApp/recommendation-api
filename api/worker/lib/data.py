@@ -1,11 +1,11 @@
 import boto3
 import os
 from worker.lib.pydantic.data_models import DataModel
+import datetime
 
 # dynamodb client
 dynamodb = boto3.resource("dynamodb")
-table_name = os.environ.get("DATA_TABLE_NAME")
-print(f"Using DynamoDB table: {table_name}")
+table_name = os.getenv("DATA_TABLE_NAME")
 table = dynamodb.Table(name=table_name)
 
 

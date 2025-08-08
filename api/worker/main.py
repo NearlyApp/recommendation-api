@@ -1,8 +1,13 @@
 import json
+import boto3
+import os
 from worker.lib.pydantic.data_models import DataModel
 from worker.lib.data import put_data
 from worker.lib.embeddings import embed_data
 from worker.lib.opensearch import OpenSearchClient
+
+sqs = boto3.client("sqs")
+queue_url = os.getenv("QUEUE_URL")
 
 
 def handler(event, context):
@@ -33,6 +38,11 @@ def handler(event, context):
 
             print("Saving embeddings to OpenSearch...")
             opensearch_client.save_embeddings(parsed_data, len(embeddings))
+
+            # delete message from queue
+            sqs.delete_message(
+                QueueUrl=queue_url, ReceiptHandle=record["receiptHandle"]
+            )
 
             if result is None:
                 print(f"Failed to put data for ID {parsed_data.post_id}")

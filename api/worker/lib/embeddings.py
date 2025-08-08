@@ -3,7 +3,7 @@ from langchain_openai import OpenAIEmbeddings
 from pydantic import SecretStr
 from typing import List
 
-from lib.pydantic.data_models import DataModel
+from worker.lib.pydantic.data_models import DataModel
 
 EMBEDDING_MODEL = "text-embedding-3-small"
 

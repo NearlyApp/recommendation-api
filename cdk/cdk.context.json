@@ -8,5 +8,6 @@
   "hosted-zone:account=992382534726:domainName=teamzbl.com:region=eu-west-1": {
     "Id": "/hostedzone/Z05452131KRZOTKBFXO4E",
     "Name": "teamzbl.com."
-  }
+  },
+  "ssm:account=992382534726:parameterName=/opensearch/DOMAIN_ARN:region=eu-west-1": "arn:aws:es:eu-west-1:992382534726:domain/dev-opensearch"
 }

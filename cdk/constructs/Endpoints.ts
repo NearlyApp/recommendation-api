@@ -8,51 +8,79 @@ import {
   type RestApi,
 } from "aws-cdk-lib/aws-apigateway";
 import {
-  Code,
   DockerImageCode,
   DockerImageFunction,
   Function,
-  LayerVersion,
-  Runtime,
 } from "aws-cdk-lib/aws-lambda";
+import * as ddb from "aws-cdk-lib/aws-dynamodb";
+import * as ssm from "aws-cdk-lib/aws-ssm";
+import * as sqs from "aws-cdk-lib/aws-sqs";
 import { fileURLToPath } from "node:url";
 import { Construct } from "constructs";
 import { dirname, join } from "path";
-import type { Queue } from "aws-cdk-lib/aws-sqs";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { Platform } from "aws-cdk-lib/aws-ecr-assets";
+import { ProcessingQueue } from "./ProcessingQueue";
+import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 
 const dir = dirname(fileURLToPath(import.meta.url));
 
 interface EndpointsProps {
   api: RestApi;
   stage: string;
-  processingQueue: Queue;
+  dataTable: ddb.Table;
 }
 
 export class Endpoints extends Construct {
   readonly api: RestApi;
   readonly stage: string;
-  // readonly pythonLayer: LayerVersion;
-  readonly processingQueue: Queue;
+  readonly processingQueue: sqs.Queue;
+  private props: EndpointsProps;
   constructor(scope: Construct, id: string, props: EndpointsProps) {
     super(scope, id);
 
     this.api = props.api;
     this.stage = props.stage;
-    this.processingQueue = props.processingQueue;
-    // this.pythonLayer = this.createLambdaLayer();
+    this.props = props;
+
+    const { queue } = new ProcessingQueue(this, "ProcessingQueue");
+    this.processingQueue = queue;
+
+    const processingLambda = this.createLambda({
+      id: "ProcessingHandler",
+      handler: "handlers.worker_lambda_handler",
+      timeout: 300,
+    });
+
+    // add permissions to opensearch for this lambda
+    const opensearchArn = ssm.StringParameter.valueFromLookup(
+      this,
+      `/opensearch/DOMAIN_ARN`
+    );
+    processingLambda.addToRolePolicy(
+      new PolicyStatement({
+        actions: ["es:*"],
+        resources: [opensearchArn],
+      })
+    );
+
+    processingLambda.addEventSource(
+      new SqsEventSource(queue, {
+        batchSize: 10,
+        reportBatchItemFailures: true,
+        enabled: true,
+      })
+    );
+
+    props.dataTable.grantReadWriteData(processingLambda);
 
     const ingest = this.api.root.addResource("ingest");
 
     const ingestHandler = this.createLambda({
       id: "IngestHandler",
       handler: "handlers.ingest_lambda_handler",
-      envs: {
-        STAGE: this.stage,
-        QUEUE_URL: this.processingQueue.queueUrl,
-      },
     });
+
     ingestHandler.addToRolePolicy(
       new PolicyStatement({
         actions: ["sqs:SendMessage"],
@@ -71,6 +99,7 @@ export class Endpoints extends Construct {
     id: string;
     handler: string;
     envs?: Record<string, string>;
+    timeout?: number;
   }) {
     const func = new DockerImageFunction(this, options.id, {
       code: DockerImageCode.fromImageAsset(join(dir, "../../api"), {
@@ -78,9 +107,22 @@ export class Endpoints extends Construct {
         file: "Dockerfile.lambda",
         platform: Platform.LINUX_AMD64,
       }),
-      environment: options.envs,
+      environment: {
+        DATA_TABLE_NAME: this.props.dataTable.tableName,
+        OPENAI_API_KEY: ssm.StringParameter.valueFromLookup(
+          this,
+          `/openai/${this.props.stage}/API_KEY`
+        ),
+        OPENSEARCH_ENDPOINT: ssm.StringParameter.valueFromLookup(
+          this,
+          `/opensearch/ENDPOINT`
+        ),
+        QUEUE_URL: this.processingQueue.queueUrl,
+        STAGE: this.stage,
+        ...options.envs,
+      },
       memorySize: 512,
-      timeout: Duration.seconds(900),
+      timeout: Duration.seconds(options.timeout ?? 900),
     });
 
     func.addEnvironment("LAMBDA_HANDLER", options.handler);

@@ -62,15 +62,11 @@ export class RecommendationAPI extends Stack {
     });
 
     const { dataTable } = new DataTable(this, "DataTable");
-    const { queue } = new ProcessingQueue(this, "ProcessingQueue", {
-      stage: props.stage,
-      dataTable,
-    });
 
     new Endpoints(this, "Endpoints", {
       api: api,
       stage: props.stage,
-      processingQueue: queue,
+      dataTable,
     });
   }
 }
