@@ -26,8 +26,17 @@ def handler(event, context):
             opensearch_client = OpenSearchClient()
             print("Opensearch client connected")
 
-            # upload to dynamodb
-            result = put_data(parsed_data)
+            # update to dynamodb with status PROCESSING
+            result = put_data(
+                DataModel(
+                    post_id=parsed_data.post_id,
+                    status="PROCESSING",
+                    metadata=parsed_data.metadata,
+                    text=parsed_data.text,
+                    created_at=parsed_data.created_at,
+                    updated_at=parsed_data.updated_at,
+                )
+            )
 
             print("Embedding data...")
             embeddings = embed_data(parsed_data)
@@ -37,11 +46,24 @@ def handler(event, context):
             print("Embeddings generated successfully")
 
             print("Saving embeddings to OpenSearch...")
-            opensearch_client.save_embeddings(parsed_data, len(embeddings))
+            opensearch_client.save_embeddings(parsed_data, embeddings)
 
             # delete message from queue
             sqs.delete_message(
                 QueueUrl=queue_url, ReceiptHandle=record["receiptHandle"]
+            )
+            print("Processed data successfully")
+
+            # update to dynamodb with status PROCESSED
+            result = put_data(
+                DataModel(
+                    post_id=parsed_data.post_id,
+                    status="PROCESSED",
+                    metadata=parsed_data.metadata,
+                    text=parsed_data.text,
+                    created_at=parsed_data.created_at,
+                    updated_at=parsed_data.updated_at,
+                )
             )
 
             if result is None:

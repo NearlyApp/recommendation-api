@@ -99,6 +99,12 @@ export class Endpoints extends Construct {
         resources: [this.processingQueue.queueArn],
       })
     );
+    ingestHandler.addToRolePolicy(
+      new PolicyStatement({
+        actions: ["dynamodb:PutItem"],
+        resources: [this.props.dataTable.tableArn],
+      })
+    );
 
     this.addIntegration({
       resource: ingest,

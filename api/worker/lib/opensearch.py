@@ -117,16 +117,24 @@ class OpenSearchClient:
             print(f"Error upserting index {self.index_name}: {e}")
             raise e
 
-    def save_embeddings(self, data: DataModel, vector_size: int):
+    def save_embeddings(self, data: DataModel, embeddings: list[float]):
         """
         Saves the embeddings for the given data model to OpenSearch.
         This method first ensures the index exists or is updated, then indexes the data.
         """
         # first upsert index
-        self._upsert_index(vector_size)
+        self._upsert_index(len(embeddings))
 
         post_id = data.post_id
-        self.client.index(index=self.index_name, id=post_id, body=data.model_dump())
+        self.client.index(
+            index=self.index_name,
+            id=post_id,
+            body={
+                **data.model_dump(exclude={"status"}),
+                f"vector_{len(embeddings)}": embeddings,
+            },
+        )
+        print(f"Saved embeddings for post ID {post_id} successfully.")
 
     def delete_embeddings(self, post_id: str):
         """

@@ -1,7 +1,6 @@
 import boto3
 import os
 from worker.lib.pydantic.data_models import DataModel
-import datetime
 
 # dynamodb client
 dynamodb = boto3.resource("dynamodb")
