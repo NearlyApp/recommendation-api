@@ -182,25 +182,4 @@ export class Endpoints extends Construct {
       resource.addMethod(method, new LambdaIntegration(lambda), methodOptions);
     }
   }
-
-  // createLambdaLayer() {
-  //   return new LayerVersion(this, "PythonLayer", {
-  //     code: Code.fromAsset(join(dir, "../../api"), {
-  //       exclude: ["**/__pycache__/**", "**/node_modules/**"],
-  //       bundling: {
-  //         image: Runtime.PYTHON_3_12.bundlingImage,
-  //         command: [
-  //           "bash",
-  //           "-c",
-  //           [
-  //             "pip install --platform manylinux2014_x86_64 --only-binary=:all: -r requirements.txt -t /asset-output/python/lib/python3.12/site-packages/",
-  //             "cp -r . /asset-output/python/lib/python3.12/site-packages/",
-  //           ].join(" && "),
-  //         ],
-  //       },
-  //     }),
-  //     compatibleRuntimes: [Runtime.PYTHON_3_12],
-  //     description: "Python dependencies for Reco API Lambda functions",
-  //   });
-  // }
 }

@@ -3,7 +3,7 @@ import json
 import os
 from pydantic import ValidationError
 
-from lib.pydanctic.requests import IngestRequest
+from lib.pydantic.requests import IngestRequest
 from worker.lib.data import put_data
 
 sqs = boto3.client("sqs")
