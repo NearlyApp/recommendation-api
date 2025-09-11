@@ -127,7 +127,7 @@ export class Endpoints extends Construct {
       }),
       environment: {
         DATA_TABLE_NAME: this.props.dataTable.tableName,
-        OPENAI_API_KEY: ssm.StringParameter.valueFromLookup(
+        OPENAI_API_KEY: ssm.StringParameter.valueForStringParameter(
           this,
           `/openai/${this.props.stage}/API_KEY`
         ),
