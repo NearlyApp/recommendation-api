@@ -4,17 +4,22 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "build": "bun build cdk/app.ts --target=node --outdir=cdk/dist",
+    "synth": "bun run build && cd cdk && bun run cdk synth",
+    "deploy": "bun run build && cd cdk && bun run cdk deploy",
     "db:generate": "bunx --bun drizzle-kit generate",
     "db:migrate": "bunx --bun drizzle-kit migrate"
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "aws-cdk": "^2.1024.0",
     "drizzle-kit": "^0.31.1"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
+    "aws-cdk-lib": "^2.206.0",
     "drizzle-orm": "^0.44.2",
     "postgres": "^3.4.7"
   }

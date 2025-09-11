@@ -1,0 +1,8 @@
+{
+  "hosted-zone:account=992382534726:domainName=teamzbl.com:region=eu-west-1": {
+    "Id": "/hostedzone/Z05452131KRZOTKBFXO4E",
+    "Name": "teamzbl.com."
+  },
+  "ssm:account=992382534726:parameterName=/opensearch/ENDPOINT:region=eu-west-1": "https://search-dev-opensearch-vhw2ee77f4oxynm6oml3n6rr4y.aos.eu-west-1.on.aws",
+  "ssm:account=992382534726:parameterName=/opensearch/DOMAIN_ARN:region=eu-west-1": "arn:aws:es:eu-west-1:992382534726:domain/dev-opensearch"
+}
