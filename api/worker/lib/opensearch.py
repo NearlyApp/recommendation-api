@@ -5,6 +5,7 @@ import os
 from urllib.parse import urlparse
 
 from worker.lib.pydantic.data_models import DataModel
+from lib.pydantic.requests import RecommendationRequest
 
 opensearch_url = os.getenv("OPENSEARCH_ENDPOINT")
 parsed_opensearch_url = urlparse(opensearch_url)
@@ -145,4 +146,48 @@ class OpenSearchClient:
             print(f"Deleted embeddings for post ID {post_id} successfully.")
         except Exception as e:
             print(f"Error deleting embeddings for post ID {post_id}: {e}")
+            raise e
+
+    def search_similar(
+        self, embeddings: list[float], parameters: RecommendationRequest
+    ) -> list[DataModel]:
+        """
+        Searches for similar data models in OpenSearch based on the given embeddings.
+        Returns a list of DataModel instances that are similar to the input embeddings.
+        """
+        try:
+            knn_query = {
+                "size": 50,
+                "_source": {
+                    "excludes": [f"vector_{len(embeddings)}"]  # exclude vector field from response
+                },
+                "query": {
+                    "knn": {
+                        f"vector_{len(embeddings)}": {
+                            "vector": embeddings,
+                            "k": 50,
+                            "filter": {
+                                "geo_distance": {
+                                    "distance": parameters.distance,
+                                    "metadata.location": {
+                                        "lat": float(parameters.location.lat),
+                                        "lon": float(parameters.location.lon),
+                                    },
+                                }
+                            }
+                        }
+                    }
+                },
+            }
+
+            print(f"Executing KNN query: {knn_query}")
+            response = self.client.search(index=self.index_name, body=knn_query)
+            hits = response.get("hits", {}).get("hits", [])
+            results = [
+                DataModel.model_validate(hit["_source"]) for hit in hits if "_source" in hit
+            ]
+            return results
+
+        except Exception as e:
+            print(f"Error searching for similar embeddings: {e}")
             raise e

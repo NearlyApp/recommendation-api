@@ -136,6 +136,26 @@ export class Endpoints extends Construct {
       method: "POST",
       lambda: ingestHandler,
     });
+
+    const recommend = this.api.root.addResource("recommend");
+
+    const recommendationHandler = this.createLambda({
+      id: "RecommendationHandler",
+      handler: "handlers.recommendation_lambda_handler",
+      timeout: 30,
+    });
+    recommendationHandler.addToRolePolicy(
+      new PolicyStatement({
+        actions: ["es:ESHttp*"],
+        resources: [`${opensearchArn}/*`],
+      })
+    );
+
+    this.addIntegration({
+      resource: recommend,
+      method: "POST",
+      lambda: recommendationHandler,
+    });
   }
 
   createLambda(options: {
