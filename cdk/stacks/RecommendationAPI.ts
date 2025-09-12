@@ -10,9 +10,9 @@ import {
 } from "aws-cdk-lib/aws-apigateway";
 import type { Construct } from "constructs";
 import { Endpoints } from "../constructs/Endpoints";
-import { ProcessingQueue } from "../constructs/ProcessingQueue";
 import { DataTable } from "../constructs/DataTable";
 import { config } from "../config";
+import { ProcessingQueue } from "../constructs/ProcessingQueue";
 
 interface APIProps extends StackProps {
   stage: string;
@@ -32,7 +32,7 @@ export class RecommendationAPI extends Stack {
       validation: certmgr.CertificateValidation.fromDns(hostedZone),
     });
 
-    const api = new RestApi(this, "RestApi", {
+    const api = new RestApi(this, `RecommendationAPI-${props.stage}`, {
       defaultCorsPreflightOptions: {
         allowOrigins: ["*"],
         allowMethods: ["*"],
@@ -62,10 +62,12 @@ export class RecommendationAPI extends Stack {
     });
 
     const { dataTable } = new DataTable(this, "DataTable");
+    const { queue } = new ProcessingQueue(this, "ProcessingQueue");
 
     new Endpoints(this, "Endpoints", {
       api: api,
       stage: props.stage,
+      processingQueue: queue,
       dataTable,
     });
   }
