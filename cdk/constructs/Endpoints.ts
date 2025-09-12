@@ -30,6 +30,7 @@ interface EndpointsProps {
   api: RestApi;
   stage: string;
   dataTable: ddb.Table;
+  processingQueue: sqs.Queue;
 }
 
 export class Endpoints extends Construct {
@@ -44,8 +45,7 @@ export class Endpoints extends Construct {
     this.stage = props.stage;
     this.props = props;
 
-    const { queue } = new ProcessingQueue(this, "ProcessingQueue");
-    this.processingQueue = queue;
+    this.processingQueue = props.processingQueue;
 
     const processingLambda = this.createLambda({
       id: "ProcessingHandler",
@@ -77,7 +77,7 @@ export class Endpoints extends Construct {
     );
 
     processingLambda.addEventSource(
-      new SqsEventSource(queue, {
+      new SqsEventSource(this.processingQueue, {
         batchSize: 10,
         reportBatchItemFailures: true,
         enabled: true,
@@ -152,34 +152,16 @@ export class Endpoints extends Construct {
     resource,
     method,
     lambda,
-    authorizer,
-    scopes = [],
   }: {
     resource: IResource;
     method: string;
     lambda: Function;
-    authorizer?: CognitoUserPoolsAuthorizer;
-    scopes?: string[];
   }) {
     const methodOptions: MethodOptions = {
-      authorizationScopes: scopes,
       apiKeyRequired: true,
-    };
+  };
 
-    if (authorizer) {
-      const newMethodOptions = {
-        ...methodOptions,
-        authorizer,
-        authorizationType: AuthorizationType.COGNITO,
-      };
 
-      resource.addMethod(
-        method,
-        new LambdaIntegration(lambda),
-        newMethodOptions
-      );
-    } else {
       resource.addMethod(method, new LambdaIntegration(lambda), methodOptions);
-    }
   }
 }
