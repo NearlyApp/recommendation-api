@@ -37,6 +37,8 @@ export class Endpoints extends Construct {
   readonly api: RestApi;
   readonly stage: string;
   readonly processingQueue: sqs.Queue;
+  readonly dataTable: ddb.Table;
+  readonly opensearchDomain: opensearch.IDomain;
   private props: EndpointsProps;
   constructor(scope: Construct, id: string, props: EndpointsProps) {
     super(scope, id);
@@ -47,13 +49,6 @@ export class Endpoints extends Construct {
 
     this.processingQueue = props.processingQueue;
 
-    const processingLambda = this.createLambda({
-      id: "ProcessingHandler",
-      handler: "handlers.worker_lambda_handler",
-      timeout: 300,
-    });
-
-    // add permissions to opensearch for this lambda
     const opensearchArn = ssm.StringParameter.valueFromLookup(
       this,
       `/opensearch/DOMAIN_ARN`
@@ -62,20 +57,28 @@ export class Endpoints extends Construct {
       this,
       `/opensearch/ENDPOINT`
     );
-    const opensearchDomain = opensearch.Domain.fromDomainEndpoint(
+    this.opensearchDomain = opensearch.Domain.fromDomainAttributes(
       this,
       "OpenSearchDomain",
-      opensearchEndpoint
+      {
+        domainArn: opensearchArn,
+        domainEndpoint: opensearchEndpoint,
+      }
     );
-    opensearchDomain.grantReadWrite(processingLambda);
+    this.dataTable = props.dataTable;
 
+    // Processing Lambda
+    const processingLambda = this.createLambda({
+      id: "ProcessingHandler",
+      handler: "handlers.worker_lambda_handler",
+      timeout: 300,
+    });
     processingLambda.addToRolePolicy(
       new PolicyStatement({
         actions: ["es:ESHttp*"],
         resources: [`${opensearchArn}/*`],
       })
     );
-
     processingLambda.addEventSource(
       new SqsEventSource(this.processingQueue, {
         batchSize: 10,
@@ -83,8 +86,31 @@ export class Endpoints extends Construct {
         enabled: true,
       })
     );
+    this.dataTable.grantReadWriteData(processingLambda);
 
-    props.dataTable.grantReadWriteData(processingLambda);
+
+    const dataResource = this.api.root.addResource("data");
+    const dataId = dataResource.addResource("{data_id}");
+    // Data manager Lambda
+    const dataLambda = this.createLambda({
+      id: "DataHandler",
+      handler: "handlers.data_lambda_handler",
+    });
+    dataLambda.addToRolePolicy(new PolicyStatement({
+      actions: ["dynamodb:GetItem", "dynamodb:DeleteItem"],
+      resources: [this.props.dataTable.tableArn],
+    }));
+    this.addIntegration({
+      resource: dataId,
+      method: "GET",
+      lambda: dataLambda,
+    })
+    this.addIntegration({
+      resource: dataId,
+      method: "DELETE",
+      lambda: dataLambda,
+    })
+
 
     const ingest = this.api.root.addResource("ingest");
 
@@ -92,7 +118,6 @@ export class Endpoints extends Construct {
       id: "IngestHandler",
       handler: "handlers.ingest_lambda_handler",
     });
-
     ingestHandler.addToRolePolicy(
       new PolicyStatement({
         actions: ["sqs:SendMessage"],
@@ -144,6 +169,8 @@ export class Endpoints extends Construct {
     });
 
     func.addEnvironment("LAMBDA_HANDLER", options.handler);
+    this.opensearchDomain.grantReadWrite(func);
+
 
     return func;
   }

@@ -30,3 +30,5 @@ class DataModel(BaseModel):
         datetime.now(timezone.utc).isoformat(),
         description="Last update timestamp of the post",
     )
+
+    model_config = ConfigDict(json_encoders={Decimal: lambda v: float(v)}, extra="forbid")

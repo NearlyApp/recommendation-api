@@ -31,11 +31,11 @@ def handler(event, context):
             "body": json.dumps({"message": "Request sent successfully"}),
         }
     except Exception as e:
-        if isinstance(e, ValidationError):
+        if isinstance(e, ValidationError) or isinstance(e, json.JSONDecodeError):
             return {
                 "statusCode": 400,
                 "body": json.dumps(
-                    {"message": "Invalid request", "errors": e.errors()}
+                    {"message": "Invalid request", "errors": e.errors() if isinstance(e, ValidationError) else str(e)}
                 ),
             }
         print(f"Error sending message to SQS: {e}")
