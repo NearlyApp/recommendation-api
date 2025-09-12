@@ -49,9 +49,9 @@ def handler(event, context):
             opensearch_client.save_embeddings(parsed_data, embeddings)
 
             # delete message from queue
-            sqs.delete_message(
-                QueueUrl=queue_url, ReceiptHandle=record["receiptHandle"]
-            )
+            # sqs.delete_message(
+            #     QueueUrl=queue_url, ReceiptHandle=record["receiptHandle"]
+            # )
             print("Processed data successfully")
 
             # update to dynamodb with status PROCESSED

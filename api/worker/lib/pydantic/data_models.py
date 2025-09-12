@@ -8,11 +8,13 @@ class DataLocation(BaseModel):
     lat: Decimal = Field(..., description="Latitude of the post location")
     lon: Decimal = Field(..., description="Longitude of the post location")
 
+    model_config = ConfigDict(json_encoders={Decimal: lambda v: float(v)})
+
 
 class DataMetadata(BaseModel):
     location: DataLocation = Field(..., description="Geographical location of the post")
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(json_encoders={Decimal: lambda v: float(v)}, extra="forbid")
 
 
 class DataModel(BaseModel):
@@ -30,3 +32,5 @@ class DataModel(BaseModel):
         datetime.now(timezone.utc).isoformat(),
         description="Last update timestamp of the post",
     )
+
+    model_config = ConfigDict(json_encoders={Decimal: lambda v: float(v)}, extra="forbid")
