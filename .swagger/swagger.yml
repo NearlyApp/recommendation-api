@@ -1,0 +1,545 @@
+openapi: 3.0.0
+info:
+  title: Recommendation API
+  description: Serverless recommendation API with indexing and future recommendation capabilities
+  version: 1.0.0
+  contact:
+    name: Recommendation API Team
+
+servers:
+  - url: https://dev.recommendation.api.nearly.teamzbl.com
+    description: Development server
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  # Indexing API endpoints
+  /ingest:
+    post:
+      summary: Ingest data for processing
+      description: Submit data to be processed, validated, and queued for embedding generation
+      tags:
+        - Indexing
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngestRequest'
+      responses:
+        '200':
+          description: Data ingested successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          description: Unauthorized - Invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /data/{data_id}:
+    get:
+      summary: Retrieve data by ID
+      description: Get processed data information by data ID
+      tags:
+        - Indexing
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: data_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the data
+          example: "post_123456"
+      responses:
+        '200':
+          description: Data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataResponse'
+        '400':
+          description: Bad request - data_id is required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Data not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete data by ID
+      description: Delete data and associated embeddings by data ID
+      tags:
+        - Indexing
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: data_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the data to delete
+          example: "post_123456"
+      responses:
+        '200':
+          description: Data deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Bad request - data_id is required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Data not found or already deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Recommendation API endpoints (future implementation)
+  /recommendations/similar:
+    post:
+      summary: Get similar content recommendations
+      description: Find similar content based on input data (future implementation)
+      tags:
+        - Recommendations
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimilarityRequest'
+      responses:
+        '200':
+          description: Recommendations retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimilarityResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '501':
+          description: Not implemented yet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /recommendations/trending:
+    get:
+      summary: Get trending content recommendations
+      description: Retrieve trending content based on various metrics (future implementation)
+      tags:
+        - Recommendations
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: time_window
+          in: query
+          schema:
+            type: string
+            enum:
+              - "1h"
+              - "6h" 
+              - "24h"
+              - "7d"
+              - "30d"
+            default: "24h"
+          description: Time window for trending analysis
+        - name: location_lat
+          in: query
+          schema:
+            type: number
+            format: float
+          description: Latitude for location-based trending
+        - name: location_lon
+          in: query
+          schema:
+            type: number
+            format: float
+          description: Longitude for location-based trending
+        - name: location_radius
+          in: query
+          schema:
+            type: number
+            format: float
+            default: 50.0
+          description: Search radius in kilometers for location-based trending
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Maximum number of trending items to return
+      responses:
+        '200':
+          description: Trending content retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrendingResponse'
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '501':
+          description: Not implemented yet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key required for all endpoints
+  
+  schemas:
+    # Core data models
+    Location:
+      type: object
+      required:
+        - lat
+        - lon
+      properties:
+        lat:
+          type: number
+          format: float
+          description: Latitude of the post location
+          example: 40.7128
+        lon:
+          type: number
+          format: float
+          description: Longitude of the post location
+          example: -74.0060
+    
+    Metadata:
+      type: object
+      required:
+        - location
+      properties:
+        location:
+          $ref: '#/components/schemas/Location'
+    
+    DataModel:
+      type: object
+      required:
+        - post_id
+        - text
+        - metadata
+      properties:
+        post_id:
+          type: string
+          description: Unique identifier for the post
+          example: "post_123456"
+        text:
+          type: string
+          description: Text content of the post
+          example: "This is a sample post content that will be processed for embeddings."
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+        status:
+          type: string
+          enum:
+            - "WAITING_FOR_PROCESSING"
+            - "PROCESSING" 
+            - "PROCESSED"
+          default: "WAITING_FOR_PROCESSING"
+          description: Current status of the post
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp of the post
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp of the post
+          example: "2024-01-15T10:30:00Z"
+    
+    # Request schemas
+    IngestRequest:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/DataModel'
+    
+    SimilarityQuery:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          description: Text to find similar content for
+          example: "Looking for posts about technology trends"
+        metadata:
+          type: object
+          properties:
+            location:
+              type: object
+              properties:
+                lat:
+                  type: number
+                  format: float
+                  description: Latitude for location-based filtering
+                  example: 40.7128
+                lon:
+                  type: number
+                  format: float
+                  description: Longitude for location-based filtering
+                  example: -74.0060
+                radius:
+                  type: number
+                  format: float
+                  description: Search radius in kilometers
+                  example: 10.0
+    
+    SimilarityRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          $ref: '#/components/schemas/SimilarityQuery'
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+          description: Maximum number of recommendations to return
+        threshold:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.7
+          description: Similarity threshold for recommendations
+    
+    # Response schemas
+    SuccessResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Request sent successfully"
+    
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Invalid request"
+    
+    ValidationErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Invalid request"
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              loc:
+                type: array
+                items:
+                  type: string
+              msg:
+                type: string
+              input:
+                type: object
+    
+    DataResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/DataModel'
+    
+    RecommendationItem:
+      type: object
+      properties:
+        post_id:
+          type: string
+          description: Unique identifier for the recommended post
+          example: "post_789012"
+        text:
+          type: string
+          description: Text content of the recommended post
+          example: "Technology trends are evolving rapidly..."
+        metadata:
+          type: object
+          properties:
+            location:
+              $ref: '#/components/schemas/Location'
+        similarity_score:
+          type: number
+          format: float
+          description: Similarity score between 0.0 and 1.0
+          example: 0.85
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-14T15:20:00Z"
+    
+    SimilarityResponse:
+      type: object
+      properties:
+        recommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecommendationItem'
+        total_found:
+          type: integer
+          description: Total number of similar items found
+          example: 25
+        query_time_ms:
+          type: integer
+          description: Query execution time in milliseconds
+          example: 125
+    
+    TrendingItem:
+      type: object
+      properties:
+        post_id:
+          type: string
+          example: "post_456789"
+        text:
+          type: string
+          example: "Breaking news about latest developments..."
+        metadata:
+          type: object
+          properties:
+            location:
+              $ref: '#/components/schemas/Location'
+        trending_score:
+          type: number
+          format: float
+          description: Trending score indicating popularity
+          example: 0.92
+        interaction_count:
+          type: integer
+          description: Number of interactions within time window
+          example: 245
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T08:15:00Z"
+    
+    TrendingResponse:
+      type: object
+      properties:
+        trending:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrendingItem'
+        time_window:
+          type: string
+          description: Time window used for analysis
+          example: "24h"
+        total_analyzed:
+          type: integer
+          description: Total number of posts analyzed
+          example: 15420
+
+tags:
+  - name: Indexing
+    description: Operations for ingesting, retrieving, and managing data
+  - name: Recommendations  
+    description: TO BE IMPLEMENTED
