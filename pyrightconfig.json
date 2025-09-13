@@ -3,7 +3,7 @@
         "api"
     ],
     "extraPaths": [
-        "api"
+        "api/*"
     ],
     "pythonVersion": "3.12",
     "pythonPlatform": "Darwin"

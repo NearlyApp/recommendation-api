@@ -1,7 +1,7 @@
-from worker.main import handler as worker_handler
-from lambdas.ingest import handler as ingest_handler
-from lambdas.data import handler as data_handler
-from lambdas.recommendation import handler as recommendation_handler
+from .worker.main import handler as worker_handler
+from .lambdas.ingest import handler as ingest_handler
+from .lambdas.data import handler as data_handler
+from .lambdas.recommendation import handler as recommendation_handler
 
 def ingest_lambda_handler(event, context):
     return ingest_handler(event, context)

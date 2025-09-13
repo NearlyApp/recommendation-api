@@ -27,12 +27,7 @@ def handler(event, context):
             print("Opensearch client connected")
 
             # update to dynamodb with status PROCESSING
-            result = put_data(
-                DataModel(
-                    **parsed_data.model_dump(),
-                    status="PROCESSING",
-                )
-            )
+            result = put_data(parsed_data.model_copy(update={"status": "PROCESSING"}))
 
             print("Embedding data...")
             embeddings = embed_data(parsed_data)
@@ -46,12 +41,7 @@ def handler(event, context):
             print("Processed data successfully")
 
             # update to dynamodb with status PROCESSED
-            result = put_data(
-                DataModel(
-                    **parsed_data.model_dump(),
-                    status="PROCESSED",
-                )
-            )
+            result = put_data(parsed_data.model_copy(update={"status": "PROCESSED"}))
 
             if result is None:
                 print(f"Failed to put data for ID {parsed_data.post_id}")

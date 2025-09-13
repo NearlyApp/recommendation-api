@@ -3,9 +3,10 @@ from cachetools import TTLCache, cached
 import boto3
 import os
 from urllib.parse import urlparse
+import os
 
-from worker.lib.pydantic.data_models import DataModel
-from lib.pydantic.requests import RecommendationRequest
+from .pydantic.data_models import DataModel
+from api.lib.pydantic.requests import RecommendationRequest
 
 opensearch_url = os.getenv("OPENSEARCH_ENDPOINT")
 parsed_opensearch_url = urlparse(opensearch_url)

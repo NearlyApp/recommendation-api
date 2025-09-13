@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional
-from ...worker.lib.pydantic.data_models import DataModelCreate, DataLocation, DataModel
+from api.worker.lib.pydantic.data_models import DataModelCreate, DataLocation, DataModel
 
 
 class IngestRequest(BaseModel):

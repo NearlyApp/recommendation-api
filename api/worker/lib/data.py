@@ -3,7 +3,7 @@ import os
 from .pydantic.data_models import DataModel
 
 # dynamodb client
-dynamodb = boto3.client("dynamodb")
+dynamodb = boto3.resource("dynamodb")
 table_name = os.getenv("DATA_TABLE_NAME")
 table = dynamodb.Table(name=table_name)
 

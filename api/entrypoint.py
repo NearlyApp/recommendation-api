@@ -7,7 +7,7 @@ def lambda_handler(event, context):
 
     module_name, function_name = handler_name.rsplit(".", 1)
 
-    module = importlib.import_module(module_name)
+    module = importlib.import_module(f"api.{module_name}")
     handler = getattr(module, function_name)
 
     return handler(event, context)

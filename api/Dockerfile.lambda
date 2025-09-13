@@ -3,7 +3,7 @@ FROM public.ecr.aws/lambda/python:3.12
 COPY requirements.txt ${LAMBDA_TASK_ROOT}
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . ${LAMBDA_TASK_ROOT}
+COPY . ${LAMBDA_TASK_ROOT}/api/
 
 RUN find ${LAMBDA_TASK_ROOT} -name "*.pyc" -delete && \
     find ${LAMBDA_TASK_ROOT} -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true && \
@@ -12,4 +12,4 @@ RUN find ${LAMBDA_TASK_ROOT} -name "*.pyc" -delete && \
 RUN mkdir -p /asset && \
     cp -r ${LAMBDA_TASK_ROOT}/* /asset/ 2>/dev/null || true
 
-CMD ["entrypoint.lambda_handler"]
+CMD ["api.entrypoint.lambda_handler"]
