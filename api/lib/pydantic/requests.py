@@ -1,10 +1,10 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional
-from worker.lib.pydantic.data_models import DataModel, DataLocation
+from ...worker.lib.pydantic.data_models import DataModelCreate, DataLocation, DataModel
 
 
 class IngestRequest(BaseModel):
-    data: DataModel = Field(..., description="Data model containing post information")
+    data: DataModelCreate = Field(..., description="Data model containing post information")
 
     model_config = {"extra": "forbid"}
 

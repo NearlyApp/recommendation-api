@@ -24,13 +24,29 @@ class DataModel(BaseModel):
         "WAITING_FOR_PROCESSING", description="Current status of the post"
     )
     text: str = Field(..., description="Text content of the post")
-    created_at: Optional[str] = Field(
+    created_at: str = Field(
         datetime.now(timezone.utc).isoformat(),
         description="Creation timestamp of the post",
     )
-    updated_at: Optional[str] = Field(
+    updated_at: str = Field(
         datetime.now(timezone.utc).isoformat(),
         description="Last update timestamp of the post",
+    )
+
+    model_config = ConfigDict(json_encoders={Decimal: lambda v: float(v)}, extra="forbid")
+
+class DataModelCreate(BaseModel):
+    post_id: str = Field(..., description="Unique identifier for the post")
+    metadata: DataMetadata = Field(..., description="Metadata associated with the post")
+    text: str = Field(..., description="Text content of the post")
+
+    created_at: Optional[str] = Field(
+        datetime.now(timezone.utc).isoformat(),
+        description="Creation timestamp of the post. If not provided, will be set to current time.",
+    )
+    updated_at: Optional[str] = Field(
+        datetime.now(timezone.utc).isoformat(),
+        description="Last update timestamp of the post. If not provided, will be set to current time.",
     )
 
     model_config = ConfigDict(json_encoders={Decimal: lambda v: float(v)}, extra="forbid")

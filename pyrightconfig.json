@@ -1,0 +1,10 @@
+{
+    "include": [
+        "api"
+    ],
+    "extraPaths": [
+        "api"
+    ],
+    "pythonVersion": "3.12",
+    "pythonPlatform": "Darwin"
+}

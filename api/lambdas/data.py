@@ -1,5 +1,5 @@
-from worker.lib.opensearch import OpenSearchClient
-from worker.lib.data import get_data, delete_data
+from ..worker.lib.opensearch import OpenSearchClient
+from ..worker.lib.data import get_data, delete_data
 import json
 
 

@@ -1,7 +1,7 @@
-from lib.pydantic.requests import RecommendationRequest
-from worker.lib.embeddings import embed_data
-from worker.lib.opensearch import OpenSearchClient
-from worker.lib.pydantic.data_models import DataModel
+from ..lib.pydantic.requests import RecommendationRequest
+from ..worker.lib.embeddings import embed_data
+from ..worker.lib.opensearch import OpenSearchClient
+from ..worker.lib.pydantic.data_models import DataModel
 from pydantic import ValidationError
 from cachetools import TTLCache, cached
 from datetime import datetime

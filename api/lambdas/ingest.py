@@ -3,8 +3,9 @@ import json
 import os
 from pydantic import ValidationError
 
-from lib.pydantic.requests import IngestRequest
-from worker.lib.data import put_data
+from ..lib.pydantic.requests import IngestRequest
+from ..worker.lib.pydantic.data_models import DataModel
+from ..worker.lib.data import put_data
 
 sqs = boto3.client("sqs")
 queue_url = os.getenv("QUEUE_URL")
@@ -22,7 +23,10 @@ def handler(event, context):
             QueueUrl=queue_url, MessageBody=parsed_body.data.model_dump_json()
         )
         # insert data status to DDB
-        put_data(parsed_body.data)
+        put_data(DataModel(
+            **parsed_body.data.model_dump(),
+            status="WAITING_FOR_PROCESSING"
+        ))
 
         print("Message sent to SQS:", response)
 

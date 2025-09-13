@@ -1,10 +1,10 @@
 import json
 import boto3
 import os
-from worker.lib.pydantic.data_models import DataModel
-from worker.lib.data import put_data
-from worker.lib.embeddings import embed_data
-from worker.lib.opensearch import OpenSearchClient
+from .lib.pydantic.data_models import DataModel
+from .lib.data import put_data
+from .lib.embeddings import embed_data
+from .lib.opensearch import OpenSearchClient
 
 sqs = boto3.client("sqs")
 queue_url = os.getenv("QUEUE_URL")
@@ -29,12 +29,8 @@ def handler(event, context):
             # update to dynamodb with status PROCESSING
             result = put_data(
                 DataModel(
-                    post_id=parsed_data.post_id,
+                    **parsed_data.model_dump(),
                     status="PROCESSING",
-                    metadata=parsed_data.metadata,
-                    text=parsed_data.text,
-                    created_at=parsed_data.created_at,
-                    updated_at=parsed_data.updated_at,
                 )
             )
 
@@ -47,22 +43,13 @@ def handler(event, context):
 
             print("Saving embeddings to OpenSearch...")
             opensearch_client.save_embeddings(parsed_data, embeddings)
-
-            # delete message from queue
-            # sqs.delete_message(
-            #     QueueUrl=queue_url, ReceiptHandle=record["receiptHandle"]
-            # )
             print("Processed data successfully")
 
             # update to dynamodb with status PROCESSED
             result = put_data(
                 DataModel(
-                    post_id=parsed_data.post_id,
+                    **parsed_data.model_dump(),
                     status="PROCESSED",
-                    metadata=parsed_data.metadata,
-                    text=parsed_data.text,
-                    created_at=parsed_data.created_at,
-                    updated_at=parsed_data.updated_at,
                 )
             )
 
