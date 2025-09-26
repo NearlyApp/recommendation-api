@@ -20,7 +20,7 @@ class DataMetadata(BaseModel):
 class DataModel(BaseModel):
     post_id: str = Field(..., description="Unique identifier for the post")
     metadata: DataMetadata = Field(..., description="Metadata associated with the post")
-    status: Literal["WAITING_FOR_PROCESSING", "PROCESSING", "PROCESSED"] = Field(
+    status: Literal["WAITING_FOR_PROCESSING", "PROCESSING", "PROCESSED", "FAILED"] = Field(
         "WAITING_FOR_PROCESSING", description="Current status of the post"
     )
     text: str = Field(..., description="Text content of the post")

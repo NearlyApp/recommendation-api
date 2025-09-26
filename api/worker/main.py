@@ -17,12 +17,11 @@ def handler(event, context):
     batch_failures = []
 
     for record in event.get("Records", []):
+        print("Processing record:", record["messageId"])
+        payload = json.loads(record["body"])
+        print("Message body:", payload)
+        parsed_data = DataModel(**payload)
         try:
-            print("Processing record:", record["messageId"])
-            payload = json.loads(record["body"])
-            print("Message body:", payload)
-            parsed_data = DataModel(**payload)
-
             opensearch_client = OpenSearchClient()
             print("Opensearch client connected")
 
@@ -49,6 +48,7 @@ def handler(event, context):
 
         except Exception as e:
             print(f"Error processing {record['messageId']}: {e}")
+            put_data(parsed_data.model_copy(update={"status": "FAILED"}))
             batch_failures.append({"itemIdentifier": record["messageId"]})
 
     return {"batchItemFailures": batch_failures}
