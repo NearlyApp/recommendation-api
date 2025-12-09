@@ -13,6 +13,8 @@ def callback_ingest_result(callback_url: str, payload: CallbackIngestResult) -> 
             headers={"Content-Type": "application/json"},
             timeout=5,
         )
+        # info print the response status code
+        print(f"Callback response status: {response.status_code}")
         response.raise_for_status()
         return True
     except Exception as e:

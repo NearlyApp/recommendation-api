@@ -1,11 +1,26 @@
 import boto3
 import os
+from decimal import Decimal
+from typing import Any
 from .pydantic.data_models import DataModel
 
 # dynamodb client
 dynamodb = boto3.resource("dynamodb")
 table_name = os.getenv("DATA_TABLE_NAME")
 table = dynamodb.Table(name=table_name)
+
+
+def convert_floats_to_decimal(obj: Any) -> Any:
+    """
+    Recursively converts float values to Decimal for DynamoDB compatibility.
+    """
+    if isinstance(obj, float):
+        return Decimal(str(obj))
+    elif isinstance(obj, dict):
+        return {k: convert_floats_to_decimal(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_floats_to_decimal(i) for i in obj]
+    return obj
 
 
 def get_data(id: str) -> DataModel | None:
@@ -29,7 +44,8 @@ def put_data(data: DataModel) -> dict | None:
     Puts data into DynamoDB table.
     """
     try:
-        response = table.put_item(Item=data.model_dump(mode="json"))
+        item = convert_floats_to_decimal(data.model_dump(mode="json"))
+        response = table.put_item(Item=item)
         return response
     except Exception as e:
         print(f"Error putting data: {e}")

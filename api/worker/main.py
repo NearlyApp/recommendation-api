@@ -29,7 +29,7 @@ def handler(event, context):
             callback_url = payload.pop("callback_url")
             print("Callback URL found:", callback_url)
 
-        parsed_data = DataModel(**payload)
+        parsed_data = DataModel(**payload["data"])
         try:
             opensearch_client = OpenSearchClient()
             print("Opensearch client connected")
@@ -57,6 +57,7 @@ def handler(event, context):
 
             # Send callback if URL is provided
             if callback_url:
+                print("Sending callback to:", callback_url)
                 callback_ingest_result(
                     callback_url,
                     CallbackIngestResult(

@@ -20,7 +20,7 @@ def handler(event, context):
         parsed_body = IngestRequest(**json.loads(body))
 
         response = sqs.send_message(
-            QueueUrl=queue_url, MessageBody=parsed_body.data.model_dump_json()
+            QueueUrl=queue_url, MessageBody=parsed_body.model_dump_json()
         )
         # insert data status to DDB
         put_data(
