@@ -29,7 +29,7 @@ def put_data(data: DataModel) -> dict | None:
     Puts data into DynamoDB table.
     """
     try:
-        response = table.put_item(Item=data.model_dump())
+        response = table.put_item(Item=data.model_dump(mode="json"))
         return response
     except Exception as e:
         print(f"Error putting data: {e}")

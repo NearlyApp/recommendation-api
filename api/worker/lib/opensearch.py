@@ -5,7 +5,7 @@ import os
 from urllib.parse import urlparse
 import os
 
-from .pydantic.data_models import DataModel
+from .pydantic.data_models import DataModel, DataModelUpdate
 from api.lib.pydantic.requests import RecommendationRequest
 
 opensearch_url = os.getenv("OPENSEARCH_ENDPOINT")
@@ -138,6 +138,38 @@ class OpenSearchClient:
         )
         print(f"Saved embeddings for post ID {post_id} successfully.")
 
+    def update_embeddings(self, post_id: str, update_data: DataModelUpdate):
+        """
+        Updates the embeddings for the given post ID in OpenSearch.
+        """
+        try:
+            update_fields = update_data.model_dump(exclude_unset=True, mode="json")
+            print(f"Update data: {update_fields}")
+
+            script_lines = []
+            for field, _ in update_fields.items():
+                script_lines.append(f"ctx._source.{field} = params.{field}")
+
+            script_source = "; ".join(script_lines)
+
+            response = self.client.update_by_query(
+                index=self.index_name,
+                body={
+                    "query": {"term": {"post_id": post_id}},
+                    "script": {
+                        "lang": "painless",
+                        "source": script_source,
+                        "params": update_fields,
+                    },
+                },
+            )
+            print(
+                f"Document with post ID {post_id} updated successfully: {response.get('updated', 0)} documents updated."
+            )
+        except Exception as e:
+            print(f"Error updating embeddings for post ID {post_id}: {e}")
+            raise e
+
     def delete_embeddings(self, post_id: str):
         """
         Deletes the embeddings for the given post ID from OpenSearch.
@@ -160,7 +192,9 @@ class OpenSearchClient:
             knn_query = {
                 "size": 50,
                 "_source": {
-                    "excludes": [f"vector_{len(embeddings)}"]  # exclude vector field from response
+                    "excludes": [
+                        f"vector_{len(embeddings)}"
+                    ]  # exclude vector field from response
                 },
                 "query": {
                     "knn": {
@@ -175,7 +209,7 @@ class OpenSearchClient:
                                         "lon": float(parameters.location.lon),
                                     },
                                 }
-                            }
+                            },
                         }
                     }
                 },
@@ -185,7 +219,9 @@ class OpenSearchClient:
             response = self.client.search(index=self.index_name, body=knn_query)
             hits = response.get("hits", {}).get("hits", [])
             results = [
-                DataModel.model_validate(hit["_source"]) for hit in hits if "_source" in hit
+                DataModel.model_validate(hit["_source"])
+                for hit in hits
+                if "_source" in hit
             ]
             return results
 

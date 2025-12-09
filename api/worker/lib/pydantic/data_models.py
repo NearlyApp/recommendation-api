@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field, ConfigDict
+from enum import Enum
 from typing import Literal, Optional
 from decimal import Decimal
 from datetime import datetime, timezone
@@ -14,14 +15,23 @@ class DataLocation(BaseModel):
 class DataMetadata(BaseModel):
     location: DataLocation = Field(..., description="Geographical location of the post")
 
-    model_config = ConfigDict(json_encoders={Decimal: lambda v: float(v)}, extra="forbid")
+    model_config = ConfigDict(
+        json_encoders={Decimal: lambda v: float(v)}, extra="forbid"
+    )
+
+
+class DataStatus(str, Enum):
+    waiting_processing = "WAITING_FOR_PROCESSING"
+    processing = "PROCESSING"
+    processed = "PROCESSED"
+    failed = "FAILED"
 
 
 class DataModel(BaseModel):
     post_id: str = Field(..., description="Unique identifier for the post")
     metadata: DataMetadata = Field(..., description="Metadata associated with the post")
-    status: Literal["WAITING_FOR_PROCESSING", "PROCESSING", "PROCESSED", "FAILED"] = Field(
-        "WAITING_FOR_PROCESSING", description="Current status of the post"
+    status: DataStatus = Field(
+        DataStatus.waiting_processing, description="Current status of the post"
     )
     text: str = Field(..., description="Text content of the post")
     created_at: str = Field(
@@ -33,7 +43,10 @@ class DataModel(BaseModel):
         description="Last update timestamp of the post",
     )
 
-    model_config = ConfigDict(json_encoders={Decimal: lambda v: float(v)}, extra="forbid")
+    model_config = ConfigDict(
+        json_encoders={Decimal: lambda v: float(v)}, extra="forbid"
+    )
+
 
 class DataModelCreate(BaseModel):
     post_id: str = Field(..., description="Unique identifier for the post")
@@ -49,4 +62,10 @@ class DataModelCreate(BaseModel):
         description="Last update timestamp of the post. If not provided, will be set to current time.",
     )
 
-    model_config = ConfigDict(json_encoders={Decimal: lambda v: float(v)}, extra="forbid")
+    model_config = ConfigDict(
+        json_encoders={Decimal: lambda v: float(v)}, extra="forbid"
+    )
+
+
+class DataModelUpdate(BaseModel):
+    status: DataStatus = Field(..., description="Current status of the post")

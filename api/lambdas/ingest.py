@@ -4,7 +4,7 @@ import os
 from pydantic import ValidationError
 
 from ..lib.pydantic.requests import IngestRequest
-from ..worker.lib.pydantic.data_models import DataModel
+from ..worker.lib.pydantic.data_models import DataModel, DataStatus
 from ..worker.lib.data import put_data
 
 sqs = boto3.client("sqs")
@@ -23,10 +23,11 @@ def handler(event, context):
             QueueUrl=queue_url, MessageBody=parsed_body.data.model_dump_json()
         )
         # insert data status to DDB
-        put_data(DataModel(
-            **parsed_body.data.model_dump(),
-            status="WAITING_FOR_PROCESSING"
-        ))
+        put_data(
+            DataModel(
+                **parsed_body.data.model_dump(), status=DataStatus.waiting_processing
+            )
+        )
 
         print("Message sent to SQS:", response)
 
@@ -39,7 +40,12 @@ def handler(event, context):
             return {
                 "statusCode": 400,
                 "body": json.dumps(
-                    {"message": "Invalid request", "errors": e.errors() if isinstance(e, ValidationError) else str(e)}
+                    {
+                        "message": "Invalid request",
+                        "errors": (
+                            e.errors() if isinstance(e, ValidationError) else str(e)
+                        ),
+                    }
                 ),
             }
         print(f"Error sending message to SQS: {e}")

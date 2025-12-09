@@ -4,14 +4,26 @@ from api.worker.lib.pydantic.data_models import DataModelCreate, DataLocation, D
 
 
 class IngestRequest(BaseModel):
-    data: DataModelCreate = Field(..., description="Data model containing post information")
+    data: DataModelCreate = Field(
+        ..., description="Data model containing post information"
+    )
+    callback_url: Optional[str] = Field(
+        None, description="Optional callback URL to notify after ingestion"
+    )
 
     model_config = {"extra": "forbid"}
 
 
 class RecommendationRequest(BaseModel):
-    candidates: List[DataModel] = Field(..., description="List of candidate data models")
-    location: DataLocation = Field(..., description="Location for recommendation context")
-    distance: Optional[str] = Field(default="50km", description="Distance metric for recommendations, example: '50km'")
+    candidates: List[DataModel] = Field(
+        ..., description="List of candidate data models"
+    )
+    location: DataLocation = Field(
+        ..., description="Location for recommendation context"
+    )
+    distance: Optional[str] = Field(
+        default="50km",
+        description="Distance metric for recommendations, example: '50km'",
+    )
 
     model_config = {"extra": "forbid"}
