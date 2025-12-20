@@ -29,6 +29,9 @@ class DataStatus(str, Enum):
 
 class DataModel(BaseModel):
     post_id: str = Field(..., description="Unique identifier for the post")
+    author_id: Optional[str] = Field(
+        None, description="Identifier of the author of the post"
+    )
     metadata: DataMetadata = Field(..., description="Metadata associated with the post")
     status: DataStatus = Field(
         DataStatus.waiting_processing, description="Current status of the post"
@@ -50,6 +53,7 @@ class DataModel(BaseModel):
 
 class DataModelCreate(BaseModel):
     post_id: str = Field(..., description="Unique identifier for the post")
+    author_id: str = Field(..., description="Identifier of the author of the post")
     metadata: DataMetadata = Field(..., description="Metadata associated with the post")
     text: str = Field(..., description="Text content of the post")
 
@@ -68,4 +72,7 @@ class DataModelCreate(BaseModel):
 
 
 class DataModelUpdate(BaseModel):
-    status: DataStatus = Field(..., description="Current status of the post")
+    status: Optional[DataStatus] = Field(None, description="Current status of the post")
+    author_id: Optional[str] = Field(
+        None, description="Identifier of the author of the post"
+    )

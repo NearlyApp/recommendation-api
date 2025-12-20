@@ -14,6 +14,17 @@ class IngestRequest(BaseModel):
     model_config = {"extra": "forbid"}
 
 
+class RecommendationFilter(BaseModel):
+    post_ids: Optional[List[str]] = Field(
+        None, description="List of post IDs to exclude from recommendations"
+    )
+    author_ids: Optional[List[str]] = Field(
+        None, description="List of author IDs to exclude from recommendations"
+    )
+
+    model_config = {"extra": "forbid"}
+
+
 class RecommendationRequest(BaseModel):
     candidates: List[DataModel] = Field(
         ..., description="List of candidate data models"
@@ -24,6 +35,9 @@ class RecommendationRequest(BaseModel):
     distance: Optional[str] = Field(
         default="50km",
         description="Distance metric for recommendations, example: '50km'",
+    )
+    filters: Optional[RecommendationFilter] = Field(
+        None, description="Optional filter to exclude specific posts or authors"
     )
 
     model_config = {"extra": "forbid"}

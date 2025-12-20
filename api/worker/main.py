@@ -4,7 +4,7 @@ import os
 
 from api.lib.pydantic.callback import CallbackIngestResult
 from api.lib.utils import callback_ingest_result
-from .lib.pydantic.data_models import DataModel, DataStatus
+from .lib.pydantic.data_models import DataModel, DataModelUpdate, DataStatus
 from .lib.data import put_data
 from .lib.embeddings import embed_data
 from .lib.opensearch import OpenSearchClient
@@ -47,7 +47,10 @@ def handler(event, context):
             print("Embeddings generated successfully")
 
             print("Saving embeddings to OpenSearch...")
-            opensearch_client.save_embeddings(parsed_data, embeddings)
+            opensearch_client.save_embeddings(
+                parsed_data.model_copy(update={"status": DataStatus.processed.value}),
+                embeddings,
+            )
             print("Processed data successfully")
 
             # update to dynamodb with status PROCESSED

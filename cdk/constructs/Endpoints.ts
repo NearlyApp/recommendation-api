@@ -49,10 +49,11 @@ export class Endpoints extends Construct {
 
     this.processingQueue = props.processingQueue;
 
-    const opensearchArn = ssm.StringParameter.valueFromLookup(
+    const opensearchArn = ssm.StringParameter.valueForStringParameter(
       this,
       `/opensearch/DOMAIN_ARN`
     );
+    console.log("OpenSearch ARN:", opensearchArn);
     const opensearchEndpoint = ssm.StringParameter.valueFromLookup(
       this,
       `/opensearch/ENDPOINT`
@@ -88,7 +89,6 @@ export class Endpoints extends Construct {
     );
     this.dataTable.grantReadWriteData(processingLambda);
 
-
     const dataResource = this.api.root.addResource("data");
     const dataId = dataResource.addResource("{data_id}");
     // Data manager Lambda
@@ -96,21 +96,22 @@ export class Endpoints extends Construct {
       id: "DataHandler",
       handler: "handlers.data_lambda_handler",
     });
-    dataLambda.addToRolePolicy(new PolicyStatement({
-      actions: ["dynamodb:GetItem", "dynamodb:DeleteItem"],
-      resources: [this.props.dataTable.tableArn],
-    }));
+    dataLambda.addToRolePolicy(
+      new PolicyStatement({
+        actions: ["dynamodb:GetItem", "dynamodb:DeleteItem"],
+        resources: [this.props.dataTable.tableArn],
+      })
+    );
     this.addIntegration({
       resource: dataId,
       method: "GET",
       lambda: dataLambda,
-    })
+    });
     this.addIntegration({
       resource: dataId,
       method: "DELETE",
       lambda: dataLambda,
-    })
-
+    });
 
     const ingest = this.api.root.addResource("ingest");
 
@@ -191,7 +192,6 @@ export class Endpoints extends Construct {
     func.addEnvironment("LAMBDA_HANDLER", options.handler);
     this.opensearchDomain.grantReadWrite(func);
 
-
     return func;
   }
 
@@ -206,9 +206,8 @@ export class Endpoints extends Construct {
   }) {
     const methodOptions: MethodOptions = {
       apiKeyRequired: true,
-  };
+    };
 
-
-      resource.addMethod(method, new LambdaIntegration(lambda), methodOptions);
+    resource.addMethod(method, new LambdaIntegration(lambda), methodOptions);
   }
 }

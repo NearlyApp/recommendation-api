@@ -61,6 +61,8 @@ class OpenSearchClient:
         properties = {
             "post_id": {"type": "keyword"},
             "text": {"type": "text"},
+            "author_id": {"type": "keyword"},
+            "status": {"type": "keyword"},
             **self._get_update_index_mapping(vector_size)["properties"],
             "metadata": {
                 "type": "object",
@@ -132,7 +134,7 @@ class OpenSearchClient:
             index=self.index_name,
             id=post_id,
             body={
-                **data.model_dump(exclude={"status"}),
+                **data.model_dump(),
                 f"vector_{len(embeddings)}": embeddings,
             },
         )
@@ -187,8 +189,44 @@ class OpenSearchClient:
         """
         Searches for similar data models in OpenSearch based on the given embeddings.
         Returns a list of DataModel instances that are similar to the input embeddings.
+        Pre-filters results by post_id and/or author_id if provided in the filter.
         """
         try:
+            # Build the filter clauses for pre-filtering
+            filter_clauses = [
+                {
+                    "geo_distance": {
+                        "distance": parameters.distance,
+                        "metadata.location": {
+                            "lat": float(parameters.location.lat),
+                            "lon": float(parameters.location.lon),
+                        },
+                    }
+                }
+            ]
+
+            # Add must_not clauses for exclusion filters
+            must_not_clauses = []
+            if parameters.filters:
+                if parameters.filters.post_ids:
+                    must_not_clauses.append(
+                        {"terms": {"post_id": parameters.filters.post_ids}}
+                    )
+                if parameters.filters.author_ids:
+                    must_not_clauses.append(
+                        {"terms": {"author_id": parameters.filters.author_ids}}
+                    )
+
+            # Build the combined filter using bool query
+            combined_filter = {
+                "bool": {
+                    "must": filter_clauses,
+                }
+            }
+
+            if must_not_clauses:
+                combined_filter["bool"]["must_not"] = must_not_clauses
+
             knn_query = {
                 "size": 50,
                 "_source": {
@@ -201,15 +239,7 @@ class OpenSearchClient:
                         f"vector_{len(embeddings)}": {
                             "vector": embeddings,
                             "k": 50,
-                            "filter": {
-                                "geo_distance": {
-                                    "distance": parameters.distance,
-                                    "metadata.location": {
-                                        "lat": float(parameters.location.lat),
-                                        "lon": float(parameters.location.lon),
-                                    },
-                                }
-                            },
+                            "filter": combined_filter,
                         }
                     }
                 },
